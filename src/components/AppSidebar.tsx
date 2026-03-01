@@ -23,6 +23,8 @@ import {
   Shield,
   PenTool,
   Swords,
+  Activity,
+  TrendingUp,
 } from "lucide-react";
 import { useUserConfig } from "@/hooks/use-user-config";
 
@@ -31,8 +33,10 @@ const navItems = [
   { title: "Company", url: "/company", icon: Building2 },
   { title: "Traffic Analytics", url: "/ads", icon: Megaphone },
   { title: "Strategy & Insights", url: "/strategy", icon: Shield },
+  { title: "KPI Projections", url: "/kpi-projections", icon: TrendingUp },
   { title: "Content Library", url: "/content", icon: PenTool },
   { title: "Competitors", url: "/competitors", icon: Swords },
+  { title: "Usage Summary", url: "/usage-summary", icon: Activity },
   { title: "Agent Loop", url: "/loop", icon: RefreshCw },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Settings", url: "/settings", icon: Settings },

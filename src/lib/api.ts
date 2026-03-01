@@ -171,6 +171,40 @@ export interface CompetitorResponse {
   };
 }
 
+// ─── KPI Projections types ───
+export interface KpiProjection {
+  _id: string;
+  strategy_id: string;
+  account_id: string;
+  company_name: string;
+  period: { start: string; end: string; };
+  baseline: { sessions: number; ctr: number; budget: number; target_cpa: number; };
+  projections: {
+    organic_sessions: number;
+    traffic_growth_percent: number;
+    projected_ctr: number;
+    organic_leads: number;
+    paid_leads: number;
+    theoretical_max_paid_leads: number;
+    projected_total_clients: number;
+    projected_revenue: number;
+  };
+  assumptions: {
+    blog_traffic_per_post: number;
+    organic_cvr: number;
+    paid_cvr: number;
+    avg_cpc: number;
+    close_rate: number;
+    avg_client_value: number;
+    ctr_lift_structured_data: number;
+    confidence_score: string;
+    risk_level: string;
+  };
+  created_at: string;
+  engine_version: string;
+}
+
+
 // ─── User Config ───
 export async function fetchUserConfig(): Promise<UserConfig | null> {
   const email = getEmail(); if (!email) return null;
@@ -234,6 +268,68 @@ export async function fetchCompanyReports(): Promise<CompanyReport[]> {
 export async function fetchCompetitorResponse(): Promise<CompetitorResponse[]> {
   const res = await fetch(`${API_BASE}/api/competitor-response`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error("Failed"); const data = await res.json(); return data.responses || [];
+}
+
+// ─── KPI Projections ───
+export async function fetchKpiProjections(): Promise<KpiProjection[]> {
+  const res = await fetch(`${API_BASE}/api/kpi-projections`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error("Failed"); const data = await res.json(); return data.projections || [];
+}
+
+
+// ─── Usage Summary ───
+export interface UsageSummaryDoc {
+  _id: string;
+  session_id: string;
+  recorded_at: string;
+  cache_read: number;
+  cache_write: number;
+  cost_usd: number;
+  input_tokens: number;
+  output_tokens: number;
+  synced_at: string;
+  total_actions: number;
+  total_conv: number;
+}
+
+export interface UsageSummaryDailyPoint {
+  date: string;
+  cost: number;
+  sessions: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheRead: number;
+  cacheWrite: number;
+  actions: number;
+  conversations: number;
+}
+
+export interface UsageSummaryStats {
+  totalSessions: number;
+  totalCost: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCacheRead: number;
+  totalCacheWrite: number;
+  totalActions: number;
+  totalConversations: number;
+  daily: UsageSummaryDailyPoint[];
+}
+
+export interface UsageSummaryDocsResult {
+  documents: UsageSummaryDoc[];
+  count: number;
+}
+
+export async function fetchUsageSummaryStats(): Promise<UsageSummaryStats> {
+  const res = await fetch(`${API_BASE}/api/usage-summary/stats`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error("Failed"); return res.json();
+}
+
+export async function fetchUsageSummaryDocs(limit = 5, skip = 0): Promise<UsageSummaryDocsResult> {
+  const params = new URLSearchParams({ limit: String(limit), skip: String(skip) });
+  const res = await fetch(`${API_BASE}/api/usage-summary/documents?${params}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error("Failed"); return res.json();
 }
 
 // ─── Agents ───

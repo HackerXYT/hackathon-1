@@ -13,6 +13,8 @@ import CompanyPage from "@/pages/CompanyPage";
 import StrategyPage from "@/pages/StrategyPage";
 import ContentLibraryPage from "@/pages/ContentLibraryPage";
 import CompetitorIntelPage from "@/pages/CompetitorIntelPage";
+import UsageSummaryPage from "@/pages/UsageSummaryPage";
+import KpiProjectionsPage from "@/pages/KpiProjectionsPage";
 import NotFound from "./pages/NotFound";
 import OnboardingPage from "./pages/OnboardingPage";
 import LoginPage from "./pages/LoginPage";
@@ -51,8 +53,10 @@ const App = () => (
           <Route path="/ads" element={<ProtectedRoute><DashboardLayout><AdsManagerPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/company" element={<ProtectedRoute><DashboardLayout><CompanyPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/strategy" element={<ProtectedRoute><DashboardLayout><StrategyPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/kpi-projections" element={<ProtectedRoute><DashboardLayout><KpiProjectionsPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/content" element={<ProtectedRoute><DashboardLayout><ContentLibraryPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/competitors" element={<ProtectedRoute><DashboardLayout><CompetitorIntelPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/usage-summary" element={<ProtectedRoute><DashboardLayout><UsageSummaryPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/loop" element={<ProtectedRoute><DashboardLayout><LoopPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><DashboardLayout><ReportsPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><DashboardLayout><SettingsPage /></DashboardLayout></ProtectedRoute>} />

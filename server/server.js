@@ -17,6 +17,7 @@ app.use(express.json({ limit: "10mb" }));
 const MONGO_URI = "mongodb+srv://mike:oCYgexRakFYkvhmR@dev-db.c8pl1gt.mongodb.net/?appName=dev-db";
 let mongoClient;
 let mongoDb;
+let usageSummaryCollection = null;
 
 async function connectMongo() {
   try {
@@ -27,8 +28,52 @@ async function connectMongo() {
     console.log("✅ Connected to MongoDB Atlas");
     console.log("═══════════════════════════════════════════════════════════\n");
 
-    const collections = await mongoDb.listCollections().toArray();
-    console.log("📁 Collections:", collections.map(c => c.name).join(", "));
+    const testCollections = await mongoDb.listCollections().toArray();
+    const testCollNames = testCollections.map(c => c.name);
+    console.log("📁 [test] Collections:", testCollNames.join(", "));
+
+    // Try to find usage_summary collection
+    if (testCollNames.includes("usage_summary")) {
+      usageSummaryCollection = mongoDb.collection("usage_summary");
+      const count = await usageSummaryCollection.countDocuments();
+      console.log(`✅ Found usage_summary in [test] database — ${count} documents`);
+    } else {
+      const usageTrackingDb = mongoClient.db("usage_tracking");
+      const utCollections = await usageTrackingDb.listCollections().toArray();
+      const utCollNames = utCollections.map(c => c.name);
+      console.log("📁 [usage_tracking] Collections:", utCollNames.join(", ") || "(none)");
+
+      if (utCollNames.includes("usage_summary")) {
+        usageSummaryCollection = usageTrackingDb.collection("usage_summary");
+        const count = await usageSummaryCollection.countDocuments();
+        console.log(`✅ Found usage_summary in [usage_tracking] database — ${count} documents`);
+      } else {
+        console.log("⚠️ usage_summary collection not found in either database");
+        const adminDb = mongoClient.db().admin();
+        const dbList = await adminDb.listDatabases();
+        for (const dbInfo of dbList.databases) {
+          const db = mongoClient.db(dbInfo.name);
+          const cols = await db.listCollections().toArray();
+          const colNames = cols.map(c => c.name);
+          if (colNames.includes("usage_summary")) {
+            usageSummaryCollection = db.collection("usage_summary");
+            const count = await usageSummaryCollection.countDocuments();
+            console.log(`✅ Found usage_summary in [${dbInfo.name}] database — ${count} documents`);
+            break;
+          }
+        }
+        if (!usageSummaryCollection) {
+          console.log("❌ usage_summary collection not found in any database");
+        }
+      }
+    }
+
+    // Check kpi_projections
+    if (testCollNames.includes("kpi_projections")) {
+      const kpiCount = await mongoDb.collection("kpi_projections").countDocuments();
+      console.log(`✅ Found kpi_projections in [test] database — ${kpiCount} documents`);
+    }
+
     console.log("");
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err.message);
@@ -258,6 +303,14 @@ async function fetchCompetitorResponseFromMongo() {
   return docs.map(serializeMongoDoc);
 }
 
+async function fetchKpiProjectionsFromMongo() {
+  if (!mongoDb) { console.log("[MongoDB] Not connected"); return []; }
+  const collection = mongoDb.collection("kpi_projections");
+  const docs = await collection.find({}).sort({ created_at: -1 }).toArray();
+  console.log(`[MongoDB] Fetched ${docs.length} kpi_projections documents`);
+  return docs.map(serializeMongoDoc);
+}
+
 function transformAnalyticsForDashboard(analyticsData, searchConsoleData) {
   if (!analyticsData) return null;
   const daily = analyticsData.daily.map((d) => {
@@ -279,6 +332,85 @@ async function getAnalyticsForUser(email, dateRange) {
   if (analyticsData) { const result = transformAnalyticsForDashboard(analyticsData, searchConsoleData); console.log(`[Analytics] ✅ MongoDB data for ${email}: ${result.daily.length} days, ${result.campaigns.length} channels`); return result; }
   console.log(`[Analytics] ⚠️ No data in MongoDB for ${email}`);
   return { source: "mongodb", totals: { impressions: 0, clicks: 0, spend: 0, conversions: 0, conversionsValue: 0, roas: 0, cpa: 0, ctr: 0, sessions: 0, users: 0, newUsers: 0, pageViews: 0, bounceRate: 0 }, changes: { impressions: 0, clicks: 0, spend: 0, conversions: 0, roas: 0, cpa: 0, sessions: 0, users: 0, pageViews: 0 }, daily: [], campaigns: [], channels: [], searchConsole: searchConsoleData || null };
+}
+
+// ═══════════════════════════════════════════════════════════
+// ─── USAGE SUMMARY DATA FETCHING ───
+// ═══════════════════════════════════════════════════════════
+
+async function fetchUsageSummaryDocs(limit = 5, skip = 0) {
+  if (!usageSummaryCollection) {
+    console.log("[UsageSummary] Collection not available");
+    return { documents: [], count: 0 };
+  }
+  const count = await usageSummaryCollection.countDocuments();
+  const docs = await usageSummaryCollection.find({}).sort({ recorded_at: -1 }).skip(skip).limit(limit).toArray();
+  console.log(`[UsageSummary] Fetched ${docs.length} of ${count} documents`);
+  return { documents: docs.map(serializeMongoDoc), count };
+}
+
+async function fetchUsageSummaryStats() {
+  if (!usageSummaryCollection) {
+    console.log("[UsageSummary] Collection not available for stats");
+    return null;
+  }
+  const count = await usageSummaryCollection.countDocuments();
+  const docs = await usageSummaryCollection.find({}).toArray();
+  console.log(`[UsageSummary] Computing stats from ${docs.length} documents`);
+
+  let totalCost = 0, totalInputTokens = 0, totalOutputTokens = 0;
+  let totalCacheRead = 0, totalCacheWrite = 0;
+  let totalActions = 0, totalConversations = 0;
+  const dailyMap = {};
+
+  for (const doc of docs) {
+    totalCost += doc.cost_usd || 0;
+    totalInputTokens += doc.input_tokens || 0;
+    totalOutputTokens += doc.output_tokens || 0;
+    totalCacheRead += doc.cache_read || 0;
+    totalCacheWrite += doc.cache_write || 0;
+    totalActions += doc.total_actions || 0;
+    totalConversations += doc.total_conv || 0;
+
+    let date = null;
+    if (doc.recorded_at) {
+      try {
+        date = new Date(doc.recorded_at).toISOString().slice(0, 10);
+      } catch {
+        date = null;
+      }
+    }
+    if (date) {
+      if (!dailyMap[date]) {
+        dailyMap[date] = { date, cost: 0, sessions: 0, inputTokens: 0, outputTokens: 0, cacheRead: 0, cacheWrite: 0, actions: 0, conversations: 0 };
+      }
+      dailyMap[date].cost += doc.cost_usd || 0;
+      dailyMap[date].sessions += 1;
+      dailyMap[date].inputTokens += doc.input_tokens || 0;
+      dailyMap[date].outputTokens += doc.output_tokens || 0;
+      dailyMap[date].cacheRead += doc.cache_read || 0;
+      dailyMap[date].cacheWrite += doc.cache_write || 0;
+      dailyMap[date].actions += doc.total_actions || 0;
+      dailyMap[date].conversations += doc.total_conv || 0;
+    }
+  }
+
+  const daily = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
+
+  const result = {
+    totalSessions: count,
+    totalCost: parseFloat(totalCost.toFixed(6)),
+    totalInputTokens,
+    totalOutputTokens,
+    totalCacheRead,
+    totalCacheWrite,
+    totalActions,
+    totalConversations,
+    daily,
+  };
+
+  console.log(`[UsageSummary] Stats: ${count} sessions, $${result.totalCost} cost, ${daily.length} daily points`);
+  return result;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -385,7 +517,7 @@ async function runFullAgentLoop(email) {
 // ─── ROUTES ───
 // ═══════════════════════════════════════════════════════════
 
-app.get("/", (req, res) => res.json({ message: "Server running 🚀", mongodb: !!mongoClient }));
+app.get("/", (req, res) => res.json({ message: "Server running 🚀", mongodb: !!mongoClient, usageSummary: !!usageSummaryCollection }));
 app.post("/api/login", (req, res) => res.json({ message: "Login successful" }));
 
 // ─── Strategy & Content from MongoDB ───
@@ -412,6 +544,63 @@ app.get("/api/competitor-response", async (req, res) => {
   if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
   const docs = await fetchCompetitorResponseFromMongo();
   res.json({ responses: docs });
+});
+
+// ─── KPI Projections from MongoDB ───
+app.get("/api/kpi-projections", async (req, res) => {
+  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
+  try {
+    const docs = await fetchKpiProjectionsFromMongo();
+    res.json({ projections: docs });
+  } catch (err) {
+    console.error("[KpiProjections] Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Usage Summary endpoints ───
+app.get("/api/usage-summary/stats", async (req, res) => {
+  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
+  try {
+    const stats = await fetchUsageSummaryStats();
+    if (!stats) return res.status(503).json({ error: "usage_summary collection not found in any database" });
+    res.json(stats);
+  } catch (err) {
+    console.error("[UsageSummary] Stats error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/usage-summary/documents", async (req, res) => {
+  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
+  try {
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = parseInt(req.query.skip) || 0;
+    const result = await fetchUsageSummaryDocs(limit, skip);
+    res.json(result);
+  } catch (err) {
+    console.error("[UsageSummary] Documents error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/usage-summary/debug", async (req, res) => {
+  const info = {
+    collectionFound: !!usageSummaryCollection,
+    mongoConnected: !!mongoClient,
+  };
+  if (usageSummaryCollection) {
+    try {
+      const count = await usageSummaryCollection.countDocuments();
+      const sample = await usageSummaryCollection.findOne({});
+      info.documentCount = count;
+      info.sampleDocument = sample ? serializeMongoDoc(sample) : null;
+      info.sampleFields = sample ? Object.keys(sample) : [];
+    } catch (err) {
+      info.error = err.message;
+    }
+  }
+  res.json(info);
 });
 
 // ─── MongoDB read-only endpoints ───
