@@ -1,0 +1,99 @@
+{
+  "email": "papostol@evoxs.xyz",
+  "company": {
+    "name": "Orbital",
+    "website": "https://orbitalstudio.gr",
+    "industry": "Tech",
+    "description": "blabla",
+    "targetMarket": "Tech",
+    "unique_selling_proposition": "Products"
+  },
+  "goal": "sales",
+  "accounts": {
+    "platforms": [
+      {
+        "id": "meta",
+        "name": "Meta Business Suite",
+        "category": "ad",
+        "status": "disconnected"
+      },
+      {
+        "id": "google-ads",
+        "name": "Google Ads",
+        "category": "ad",
+        "status": "connected"
+      },
+      {
+        "id": "tiktok",
+        "name": "TikTok Ads Manager",
+        "category": "ad",
+        "status": "disconnected"
+      },
+      {
+        "id": "ga4",
+        "name": "Google Analytics 4",
+        "category": "conversion",
+        "status": "connected"
+      },
+      {
+        "id": "shopify",
+        "name": "Shopify",
+        "category": "conversion",
+        "status": "disconnected"
+      },
+      {
+        "id": "stripe",
+        "name": "Stripe",
+        "category": "conversion",
+        "status": "disconnected"
+      },
+      {
+        "id": "hubspot",
+        "name": "HubSpot CRM",
+        "category": "crm",
+        "status": "disconnected"
+      },
+      {
+        "id": "salesforce",
+        "name": "Salesforce",
+        "category": "crm",
+        "status": "disconnected"
+      }
+    ],
+    "connectedPlatforms": [
+      "google-ads",
+      "ga4"
+    ]
+  },
+  "budget": {
+    "northStar": "growth",
+    "targetCpa": 45,
+    "dailyBudget": 500,
+    "monthlyBudget": 10000,
+    "scalingLimit": 150
+  },
+  "audience": {
+    "personaAge": "25-44",
+    "personaLocation": "Greece",
+    "personaInterests": "tech, good"
+  },
+  "creative": {
+    "negativeConstraints": [
+      "Bad"
+    ],
+    "competitors": [
+      "None"
+    ],
+    "valueProps": [
+      "Good"
+    ],
+    "vibe": 5
+  },
+  "reporting": {
+    "deliveryChannel": "email",
+    "reportFrequency": "daily",
+    "escalationTrigger": "both",
+    "cpaSpikeThreshold": 50
+  },
+  "uploadedFiles": {}
+}

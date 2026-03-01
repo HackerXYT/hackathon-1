@@ -1,0 +1,90 @@
+{
+  "email": "gregpap03@gmail.com",
+  "company": {
+    "name": "Orbital",
+    "website": "htttps://orbital.gr",
+    "industry": "Tech",
+    "description": "Orbital Studio is a premier Product Studio that bridges the gap between visionary ideas and high-performance technical execution. After operating in stealth to build and scale digital products for global partners, we are now officially open to the public, offering a \"business-first\" approach to software engineering.\n\nWe specialize in:\n•⁠  ⁠AI Automations & Agentic Solutions: Building intelligent agents that automate complex business workflows.\n•⁠  ⁠MVP Development: Rapidly transforming concepts into market-ready, scalable products.\n•⁠  ⁠Custom Web & Mobile Engineering: High-speed data engines, custom ERPs, and robust digital platforms.\n•⁠  ⁠Technical Strategy: Providing the architectural foresight of a technical co-founder.",
+    "targetMarket": "Market",
+    "unique_selling_proposition": "Venture Capital, Seed Funding, Product-Led Growth (PLG), Digital Transformation, Venture Capital, Seed Funding, Product-Led Growth (PLG), Digital Transformation,Venture Capital, Seed Funding, Product-Led Growth (PLG), Digital Transformation"
+  },
+  "goal": "leads",
+  "accounts": {
+    "platforms": [
+      {
+        "id": "meta",
+        "name": "Meta Business Suite",
+        "category": "ad",
+        "status": "disconnected"
+      },
+      {
+        "id": "google-ads",
+        "name": "Google Ads",
+        "category": "ad",
+        "status": "disconnected"
+      },
+      {
+        "id": "tiktok",
+        "name": "TikTok Ads Manager",
+        "category": "ad",
+        "status": "disconnected"
+      },
+      {
+        "id": "ga4",
+        "name": "Google Analytics 4",
+        "category": "conversion",
+        "status": "disconnected"
+      },
+      {
+        "id": "shopify",
+        "name": "Shopify",
+        "category": "conversion",
+        "status": "disconnected"
+      },
+      {
+        "id": "stripe",
+        "name": "Stripe",
+        "category": "conversion",
+        "status": "disconnected"
+      },
+      {
+        "id": "hubspot",
+        "name": "HubSpot CRM",
+        "category": "crm",
+        "status": "disconnected"
+      },
+      {
+        "id": "salesforce",
+        "name": "Salesforce",
+        "category": "crm",
+        "status": "disconnected"
+      }
+    ],
+    "connectedPlatforms": []
+  },
+  "budget": {
+    "northStar": "growth",
+    "targetCpa": 45,
+    "dailyBudget": 500,
+    "monthlyBudget": 10000,
+    "scalingLimit": 200
+  },
+  "audience": {
+    "personaAge": "25-44",
+    "personaLocation": "",
+    "personaInterests": ""
+  },
+  "creative": {
+    "negativeConstraints": [],
+    "competitors": [],
+    "valueProps": [],
+    "vibe": 5
+  },
+  "reporting": {
+    "deliveryChannel": "email",
+    "reportFrequency": "daily",
+    "escalationTrigger": "both",
+    "cpaSpikeThreshold": 50
+  },
+  "uploadedFiles": {}
+}
