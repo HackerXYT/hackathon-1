@@ -207,7 +207,7 @@ export default function OnboardingPage() {
       formData.append("seedAudience", seedFile, seedFile.name);
     }
 
-    const response = await fetch("http://localhost:3000/api/setup", {
+    const response = await fetch("https://hackathon-backend.evoxs.xyz/api/setup", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

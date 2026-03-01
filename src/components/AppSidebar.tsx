@@ -25,6 +25,7 @@ import {
   Swords,
   Activity,
   TrendingUp,
+  Image,
 } from "lucide-react";
 import { useUserConfig } from "@/hooks/use-user-config";
 
@@ -55,12 +56,12 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-            <Zap className="h-5 w-5 text-primary" />
+            <img src="/logo-good.png" alt="ScaleBot Logo" width={35} height={35} />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-display text-sm font-bold text-foreground">No-Human</span>
-              <span className="text-[11px] text-muted-foreground">Marketing Agency</span>
+              <span className="font-display text-sm font-bold text-foreground">ScaleBot</span>
+              <span className="text-[11px] text-muted-foreground">AI-Powered Growth Engine</span>
             </div>
           )}
         </div>

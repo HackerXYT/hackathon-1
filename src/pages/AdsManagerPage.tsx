@@ -11,26 +11,10 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Line,
 } from "recharts";
+import { ChartTooltip } from "@/components/charts/ChartTooltip";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
 const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload?.length) {
-    return (
-      <div className="glass-card p-3 text-xs">
-        <p className="font-medium text-foreground mb-1">{label}</p>
-        {payload.map((p: any, i: number) => (
-          <p key={i} style={{ color: p.color }} className="flex justify-between gap-4">
-            <span className="text-muted-foreground">{p.name}:</span>
-            <span className="font-medium">{p.value}</span>
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
 
 export default function AdsManagerPage() {
   const { data: analytics, isLoading: analyticsLoading, isError, refetch: refetchAnalytics } = useQuery({
@@ -57,7 +41,6 @@ export default function AdsManagerPage() {
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
       <motion.div variants={item} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Traffic Analytics</h1>
@@ -68,7 +51,6 @@ export default function AdsManagerPage() {
         </Button>
       </motion.div>
 
-      {/* Loading */}
       {analyticsLoading && (
         <motion.div variants={item} className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 text-primary animate-spin" />
@@ -76,7 +58,6 @@ export default function AdsManagerPage() {
         </motion.div>
       )}
 
-      {/* Error state */}
       {isError && !analyticsLoading && (
         <motion.div variants={item} className="glass-card p-8 text-center">
           <Globe className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -90,13 +71,11 @@ export default function AdsManagerPage() {
 
       {analytics && !isError && (
         <>
-          {/* Data Source Indicator */}
+          {/* Data Source */}
           <motion.div variants={item} className={`flex items-center gap-3 p-3 rounded-lg border ${analytics.source === "mongodb" ? "border-success/30 bg-success/5" : "border-warning/30 bg-warning/5"}`}>
             <Database className="h-4 w-4 text-success" />
             <span className="text-xs font-medium text-success">
-              {analytics.source === "mongodb"
-                ? "Live Data — Connected to MongoDB (Google Analytics + Search Console)"
-                : "No data available — waiting for MongoDB sync"}
+              {analytics.source === "mongodb" ? "Live Data — Connected to MongoDB (Google Analytics + Search Console)" : "No data available — waiting for MongoDB sync"}
             </span>
           </motion.div>
 
@@ -162,9 +141,9 @@ export default function AdsManagerPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 25%, 16%)" />
                     <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(215, 20%, 55%)" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: "hsl(215, 20%, 55%)" }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="sessions" name="Sessions" stroke="hsl(187, 96%, 42%)" fill="url(#sessGradAM)" strokeWidth={2} />
-                    <Line type="monotone" dataKey="users" name="Users" stroke="hsl(250, 80%, 62%)" strokeWidth={2} dot={false} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: "hsl(215,20%,25%)", strokeWidth: 1 }} />
+                    <Area type="monotone" dataKey="sessions" name="Sessions" stroke="hsl(187, 96%, 42%)" fill="url(#sessGradAM)" strokeWidth={2} activeDot={{ r: 4, strokeWidth: 0, fill: "hsl(187,96%,42%)" }} />
+                    <Line type="monotone" dataKey="users" name="Users" stroke="hsl(250, 80%, 62%)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: "hsl(250,80%,62%)" }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </motion.div>
@@ -183,24 +162,21 @@ export default function AdsManagerPage() {
                     <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(215, 20%, 55%)" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "hsl(215, 20%, 55%)" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(215, 20%, 55%)" }} axisLine={false} tickLine={false} domain={[0, 100]} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Area yAxisId="left" type="monotone" dataKey="pageViews" name="Page Views" stroke="hsl(152, 69%, 40%)" fill="url(#pvGradAM)" strokeWidth={2} />
-                    <Line yAxisId="right" type="monotone" dataKey="bounceRate" name="Bounce Rate (%)" stroke="hsl(0, 72%, 51%)" strokeWidth={2} dot={false} strokeDasharray="4 4" />
+                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: "hsl(215,20%,25%)", strokeWidth: 1 }} />
+                    <Area yAxisId="left" type="monotone" dataKey="pageViews" name="Page Views" stroke="hsl(152, 69%, 40%)" fill="url(#pvGradAM)" strokeWidth={2} activeDot={{ r: 4, strokeWidth: 0, fill: "hsl(152,69%,40%)" }} />
+                    <Line yAxisId="right" type="monotone" dataKey="bounceRate" name="Bounce Rate (%)" stroke="hsl(0, 72%, 51%)" strokeWidth={2} dot={false} strokeDasharray="4 4" activeDot={{ r: 4, strokeWidth: 0, fill: "hsl(0,72%,51%)" }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </motion.div>
             </div>
           )}
 
-          {/* AI Recommendations */}
+          {/* Recommendations */}
           {recommendations.length > 0 && (
             <motion.div variants={item} className="glass-card p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Lightbulb className="h-4 w-4 text-warning" />
                 <h3 className="text-sm font-display font-semibold text-foreground">Recommendations</h3>
-                <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-warning/10 text-warning font-medium animate-pulse-glow">
-                  AI-Powered
-                </span>
               </div>
               <div className="space-y-3">
                 {recommendations.map((rec, i) => (
@@ -229,7 +205,6 @@ export default function AdsManagerPage() {
                 <h3 className="text-sm font-display font-semibold text-foreground">Traffic Channels</h3>
                 <span className="text-[10px] text-muted-foreground">{campaigns.length} channels</span>
               </div>
-
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -246,9 +221,7 @@ export default function AdsManagerPage() {
                   <tbody className="divide-y divide-border/30">
                     {campaigns.map((c: any) => (
                       <tr key={c.id} className="hover:bg-secondary/20 transition-colors">
-                        <td className="py-3 pr-4">
-                          <p className="font-medium text-foreground text-xs">{c.name}</p>
-                        </td>
+                        <td className="py-3 pr-4"><p className="font-medium text-foreground text-xs">{c.name}</p></td>
                         <td className="py-3 pr-4">
                           <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                             c.channelType === "PAID_SEARCH" ? "bg-warning/10 text-warning" :
@@ -256,18 +229,13 @@ export default function AdsManagerPage() {
                             c.channelType === "SOCIAL" ? "bg-accent/10 text-accent" :
                             c.channelType === "REFERRAL" ? "bg-primary/10 text-primary" :
                             "bg-muted text-muted-foreground"
-                          }`}>
-                            {c.channelType}
-                          </span>
+                          }`}>{c.channelType}</span>
                         </td>
                         <td className="py-3 pr-4 text-right text-xs">{(c.sessions || c.clicks || 0).toLocaleString()}</td>
                         <td className="py-3 pr-4 text-right text-xs text-muted-foreground">{(c.users || c.impressions || 0).toLocaleString()}</td>
                         <td className="py-3 pr-4 text-right text-xs">{(c.pageViews || 0).toLocaleString()}</td>
                         <td className="py-3 pr-4 text-right">
-                          <span className={`text-xs font-mono font-medium ${
-                            (c.bounceRate || 0) > 70 ? "text-destructive" :
-                            (c.bounceRate || 0) < 40 ? "text-success" : "text-warning"
-                          }`}>
+                          <span className={`text-xs font-mono font-medium ${(c.bounceRate || 0) > 70 ? "text-destructive" : (c.bounceRate || 0) < 40 ? "text-success" : "text-warning"}`}>
                             {(c.bounceRate || 0).toFixed(1)}%
                           </span>
                         </td>
@@ -315,7 +283,7 @@ export default function AdsManagerPage() {
             </motion.div>
           )}
 
-          {/* Channel Breakdown Chart */}
+          {/* Channel Bar Chart */}
           {campaigns.length > 0 && (
             <motion.div variants={item} className="glass-card p-5">
               <h3 className="text-sm font-display font-semibold text-foreground mb-4">Channel Sessions Breakdown</h3>
@@ -330,7 +298,7 @@ export default function AdsManagerPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 25%, 16%)" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(215, 20%, 55%)" }} axisLine={false} tickLine={false} />
                   <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: "hsl(215, 20%, 55%)" }} axisLine={false} tickLine={false} width={120} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(222,25%,14%)" }} />
                   <Bar dataKey="sessions" name="Sessions" fill="hsl(187, 96%, 42%)" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -359,57 +327,33 @@ function generateRecommendations(analytics: any, campaigns: any[]) {
   const changes = analytics?.changes || {};
 
   if ((totals.bounceRate || 0) > 60) {
-    recs.push({
-      title: "High bounce rate detected",
-      description: `Overall bounce rate is ${(totals.bounceRate || 0).toFixed(1)}%, which is above the 60% threshold. Consider improving landing page content, load speed, and mobile experience.`,
-      impact: "high",
-    });
+    recs.push({ title: "High bounce rate detected", description: `Overall bounce rate is ${(totals.bounceRate || 0).toFixed(1)}%, which is above the 60% threshold. Consider improving landing page content, load speed, and mobile experience.`, impact: "high" });
   }
 
   const highBounceCh = campaigns.filter((c: any) => (c.bounceRate || 0) > 80 && (c.sessions || c.clicks || 0) > 2);
   if (highBounceCh.length > 0) {
-    recs.push({
-      title: `${highBounceCh.length} channel${highBounceCh.length > 1 ? "s" : ""} with >80% bounce rate`,
-      description: `${highBounceCh.map((c: any) => c.name).join(", ")} — these channels are sending traffic that immediately leaves. Review targeting or landing page relevance.`,
-      impact: "medium",
-    });
+    recs.push({ title: `${highBounceCh.length} channel${highBounceCh.length > 1 ? "s" : ""} with >80% bounce rate`, description: `${highBounceCh.map((c: any) => c.name).join(", ")} — these channels are sending traffic that immediately leaves.`, impact: "medium" });
   }
 
   const sortedBySessions = [...campaigns].sort((a: any, b: any) => (b.sessions || b.clicks || 0) - (a.sessions || a.clicks || 0));
   const bestChannel = sortedBySessions[0];
   if (bestChannel && (bestChannel.sessions || bestChannel.clicks || 0) > 0) {
-    recs.push({
-      title: `Top channel: ${bestChannel.name}`,
-      description: `Driving ${(bestChannel.sessions || bestChannel.clicks || 0)} sessions with ${(bestChannel.bounceRate || 0).toFixed(1)}% bounce rate. Consider investing more in this channel.`,
-      impact: "low",
-    });
+    recs.push({ title: `Top channel: ${bestChannel.name}`, description: `Driving ${(bestChannel.sessions || bestChannel.clicks || 0)} sessions with ${(bestChannel.bounceRate || 0).toFixed(1)}% bounce rate. Consider investing more in this channel.`, impact: "low" });
   }
 
   if ((changes.sessions || changes.clicks || 0) < -10) {
-    recs.push({
-      title: "Sessions declining",
-      description: `Sessions dropped ${Math.abs(changes.sessions || changes.clicks || 0).toFixed(1)}% vs previous period. Investigate traffic sources and consider running new campaigns.`,
-      impact: "high",
-    });
+    recs.push({ title: "Sessions declining", description: `Sessions dropped ${Math.abs(changes.sessions || changes.clicks || 0).toFixed(1)}% vs previous period. Investigate traffic sources and consider running new campaigns.`, impact: "high" });
   }
 
   if ((changes.sessions || changes.clicks || 0) > 20) {
-    recs.push({
-      title: "Strong session growth",
-      description: `Sessions grew ${(changes.sessions || changes.clicks || 0).toFixed(1)}% vs previous period. Great momentum — ensure your site can handle the increased traffic.`,
-      impact: "low",
-    });
+    recs.push({ title: "Strong session growth", description: `Sessions grew ${(changes.sessions || changes.clicks || 0).toFixed(1)}% vs previous period. Great momentum — ensure your site can handle the increased traffic.`, impact: "low" });
   }
 
   const totalSessions = totals.sessions || totals.clicks || 0;
   const totalPageViews = totals.pageViews || 0;
   const pagesPerSession = totalSessions > 0 ? totalPageViews / totalSessions : 0;
   if (pagesPerSession > 0 && pagesPerSession < 1.5) {
-    recs.push({
-      title: "Low engagement — few pages per session",
-      description: `Users view only ${pagesPerSession.toFixed(1)} pages per session on average. Improve internal linking and content to encourage deeper browsing.`,
-      impact: "medium",
-    });
+    recs.push({ title: "Low engagement — few pages per session", description: `Users view only ${pagesPerSession.toFixed(1)} pages per session on average. Improve internal linking and content to encourage deeper browsing.`, impact: "medium" });
   }
 
   return recs;

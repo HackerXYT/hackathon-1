@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
@@ -8,13 +10,13 @@ const { OAuth2Client } = require("google-auth-library");
 const { MongoClient } = require("mongodb");
 
 const app = express();
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || "3000", 10);
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
 // ─── MongoDB Connection ───
-const MONGO_URI = "mongodb+srv://mike:oCYgexRakFYkvhmR@dev-db.c8pl1gt.mongodb.net/?appName=dev-db";
+const MONGO_URI = process.env.MONGO_URI;
 let mongoClient;
 let mongoDb;
 let usageSummaryCollection = null;
@@ -82,10 +84,10 @@ async function connectMongo() {
 
 // ─── Claude AI Client ───
 const anthropic = new Anthropic({
-  apiKey: "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",
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-const GOOGLE_ADS_API_VERSION = "v18";
+const GOOGLE_ADS_API_VERSION = process.env.GOOGLE_ADS_API_VERSION || "v18";
 
 // ─── Multer config ───
 const storage = multer.diskStorage({
@@ -339,10 +341,7 @@ async function getAnalyticsForUser(email, dateRange) {
 // ═══════════════════════════════════════════════════════════
 
 async function fetchUsageSummaryDocs(limit = 5, skip = 0) {
-  if (!usageSummaryCollection) {
-    console.log("[UsageSummary] Collection not available");
-    return { documents: [], count: 0 };
-  }
+  if (!usageSummaryCollection) { console.log("[UsageSummary] Collection not available"); return { documents: [], count: 0 }; }
   const count = await usageSummaryCollection.countDocuments();
   const docs = await usageSummaryCollection.find({}).sort({ recorded_at: -1 }).skip(skip).limit(limit).toArray();
   console.log(`[UsageSummary] Fetched ${docs.length} of ${count} documents`);
@@ -350,10 +349,7 @@ async function fetchUsageSummaryDocs(limit = 5, skip = 0) {
 }
 
 async function fetchUsageSummaryStats() {
-  if (!usageSummaryCollection) {
-    console.log("[UsageSummary] Collection not available for stats");
-    return null;
-  }
+  if (!usageSummaryCollection) { console.log("[UsageSummary] Collection not available for stats"); return null; }
   const count = await usageSummaryCollection.countDocuments();
   const docs = await usageSummaryCollection.find({}).toArray();
   console.log(`[UsageSummary] Computing stats from ${docs.length} documents`);
@@ -373,17 +369,9 @@ async function fetchUsageSummaryStats() {
     totalConversations += doc.total_conv || 0;
 
     let date = null;
-    if (doc.recorded_at) {
-      try {
-        date = new Date(doc.recorded_at).toISOString().slice(0, 10);
-      } catch {
-        date = null;
-      }
-    }
+    if (doc.recorded_at) { try { date = new Date(doc.recorded_at).toISOString().slice(0, 10); } catch { date = null; } }
     if (date) {
-      if (!dailyMap[date]) {
-        dailyMap[date] = { date, cost: 0, sessions: 0, inputTokens: 0, outputTokens: 0, cacheRead: 0, cacheWrite: 0, actions: 0, conversations: 0 };
-      }
+      if (!dailyMap[date]) { dailyMap[date] = { date, cost: 0, sessions: 0, inputTokens: 0, outputTokens: 0, cacheRead: 0, cacheWrite: 0, actions: 0, conversations: 0 }; }
       dailyMap[date].cost += doc.cost_usd || 0;
       dailyMap[date].sessions += 1;
       dailyMap[date].inputTokens += doc.input_tokens || 0;
@@ -396,21 +384,7 @@ async function fetchUsageSummaryStats() {
   }
 
   const daily = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
-
-  const result = {
-    totalSessions: count,
-    totalCost: parseFloat(totalCost.toFixed(6)),
-    totalInputTokens,
-    totalOutputTokens,
-    totalCacheRead,
-    totalCacheWrite,
-    totalActions,
-    totalConversations,
-    daily,
-  };
-
-  console.log(`[UsageSummary] Stats: ${count} sessions, $${result.totalCost} cost, ${daily.length} daily points`);
-  return result;
+  return { totalSessions: count, totalCost: parseFloat(totalCost.toFixed(6)), totalInputTokens, totalOutputTokens, totalCacheRead, totalCacheWrite, totalActions, totalConversations, daily };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -449,7 +423,7 @@ async function callClaude(systemPrompt, userMessage) {
 async function runAnalystAgent(email) {
   const config = getUserConfig(email); if (!config) throw new Error("User not found");
   const analytics = await getAnalyticsForUser(email); const budget = config.budget || {}; const creative = config.creative || {}; const audience = config.audience || {}; const company = config.company || {}; const connected = config.accounts?.connectedPlatforms || []; const recentLogs = getAgentLogs(email).slice(0, 20);
-  const systemPrompt = `You are the Analyst Agent for an autonomous AI marketing agency called "No-Human." Your role is constant surveillance and data mining across ad platforms and website analytics.\nYou analyze website traffic, user behavior, conversion rates, bounce rates, traffic sources, and identify opportunities and issues.\nYou must respond with a valid JSON object (no markdown, no code blocks) with this exact structure:\n{\n  "findings": [\n    { "type": "fatigue|opportunity|anomaly|warning|cpa_alert|trend|guardrail", "severity": "high|medium|low", "message": "Human-readable finding", "trigger_for": "creative_director|media_buyer|account_manager|none", "trigger_message": "Message to send to the other agent (or null)" }\n  ],\n  "summary": "One paragraph executive summary of the account health",\n  "health_score": 0-100,\n  "recommended_actions": ["action1", "action2"]\n}`;
+  const systemPrompt = `You are the Analyst Agent for an autonomous AI marketing agency called "ScaleBot." Your role is constant surveillance and data mining across ad platforms and website analytics.\nYou analyze website traffic, user behavior, conversion rates, bounce rates, traffic sources, and identify opportunities and issues.\nYou must respond with a valid JSON object (no markdown, no code blocks) with this exact structure:\n{\n  "findings": [\n    { "type": "fatigue|opportunity|anomaly|warning|cpa_alert|trend|guardrail", "severity": "high|medium|low", "message": "Human-readable finding", "trigger_for": "creative_director|media_buyer|account_manager|none", "trigger_message": "Message to send to the other agent (or null)" }\n  ],\n  "summary": "One paragraph executive summary of the account health",\n  "health_score": 0-100,\n  "recommended_actions": ["action1", "action2"]\n}`;
   const searchConsoleInfo = analytics.searchConsole ? `\nSEARCH CONSOLE:\nTotal Clicks: ${analytics.searchConsole.totals.clicks}, Impressions: ${analytics.searchConsole.totals.impressions}, CTR: ${(analytics.searchConsole.totals.ctr * 100).toFixed(2)}%, Avg Position: ${analytics.searchConsole.totals.avgPosition}\nTop Queries: ${analytics.searchConsole.queries.slice(0, 5).map(q => `"${q.query}" (${q.clicks} clicks, ${q.impressions} imp, pos ${q.position})`).join(", ")}` : "";
   const userMessage = `Analyze this website and advertising account:\nCOMPANY: ${company.name || "Unknown"} (${company.industry || "Unknown"})\nUSP: ${company.unique_selling_proposition || "Not set"}\nDATA SOURCE: MongoDB (Real Google Analytics + Search Console data)\nBUDGET: Strategy=${budget.northStar || "growth"}, Daily=$${budget.dailyBudget || 0}, Monthly=$${budget.monthlyBudget || 0}, Target CPA=$${budget.targetCpa || 0}, Scaling=${budget.scalingLimit || 150}%\nAUDIENCE: Age=${audience.personaAge || "?"}, Location=${audience.personaLocation || "?"}, Interests=${audience.personaInterests || "?"}\nCREATIVE: ValueProps=${(creative.valueProps || []).join(", ") || "None"}, Constraints=${(creative.negativeConstraints || []).join(", ") || "None"}, Risk=${creative.vibe || 5}/10\nPLATFORMS: ${connected.join(", ") || "None"}\n\nWEBSITE ANALYTICS (from Google Analytics):\nSessions: ${analytics.totals.sessions || 0} (${analytics.changes.sessions > 0 ? "+" : ""}${analytics.changes.sessions || 0}%)\nUsers: ${analytics.totals.users || 0} (${analytics.changes.users > 0 ? "+" : ""}${analytics.changes.users || 0}%)\nPage Views: ${analytics.totals.pageViews || 0} (${analytics.changes.pageViews > 0 ? "+" : ""}${analytics.changes.pageViews || 0}%)\nBounce Rate: ${analytics.totals.bounceRate || 0}%\nConversions: ${analytics.totals.conversions || 0}\n\nTRAFFIC CHANNELS:\n${analytics.campaigns.map((c) => `- ${c.name} [${c.channelType}] Sessions=${c.sessions} Users=${c.users} PageViews=${c.pageViews} BounceRate=${c.bounceRate}%`).join("\n")}\n${searchConsoleInfo}\n\nRECENT ACTIVITY:\n${recentLogs.slice(0, 10).map((l) => `[${l.agent}] ${l.message}`).join("\n") || "None"}`;
   const aiResponse = await callClaude(systemPrompt, userMessage);
@@ -462,7 +436,7 @@ async function runAnalystAgent(email) {
 async function runCreativeDirectorAgent(email, analystTrigger) {
   const config = getUserConfig(email); if (!config) throw new Error("User not found");
   const creative = config.creative || {}; const company = config.company || {}; const analytics = await getAnalyticsForUser(email);
-  const systemPrompt = `You are the Creative Director Agent for "No-Human." You generate ad creative assets based on brand DNA and analyst triggers.\nRespond with valid JSON (no markdown):\n{ "creatives": [{ "type": "headline|description|video_concept|image_concept|hook", "platform": "Google Ads|Meta|TikTok|All", "content": "text", "rationale": "why", "estimated_impact": "high|medium|low", "variation_of": "what it replaces or null" }], "strategy_note": "strategy", "brand_compliance": true, "constraints_applied": [] }`;
+  const systemPrompt = `You are the Creative Director Agent for "ScaleBot." You generate ad creative assets based on brand DNA and analyst triggers.\nRespond with valid JSON (no markdown):\n{ "creatives": [{ "type": "headline|description|video_concept|image_concept|hook", "platform": "Google Ads|Meta|TikTok|All", "content": "text", "rationale": "why", "estimated_impact": "high|medium|low", "variation_of": "what it replaces or null" }], "strategy_note": "strategy", "brand_compliance": true, "constraints_applied": [] }`;
   const userMessage = `Generate creatives for:\nCOMPANY: ${company.name || "Unknown"} (${company.industry || "?"})\nUSP: ${company.unique_selling_proposition || "?"}\nVALUE PROPS: ${(creative.valueProps || []).join(", ") || "None"}\nCONSTRAINTS: ${(creative.negativeConstraints || []).join(", ") || "None"}\nCOMPETITORS: ${(creative.competitors || []).join(", ") || "None"}\nRISK: ${creative.vibe || 5}/10\nSessions: ${analytics.totals.sessions || 0}, Users: ${analytics.totals.users || 0}, Bounce Rate: ${analytics.totals.bounceRate || 0}%\n${analystTrigger ? `\nTRIGGER: ${analystTrigger}` : ""}\nGenerate 5-8 assets.`;
   const aiResponse = await callClaude(systemPrompt, userMessage);
   let parsed; try { parsed = JSON.parse(aiResponse); } catch { const m = aiResponse.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { creatives: [], strategy_note: aiResponse.slice(0, 500), brand_compliance: true, constraints_applied: [] }; }
@@ -474,7 +448,7 @@ async function runCreativeDirectorAgent(email, analystTrigger) {
 async function runMediaBuyerAgent(email, analystTrigger) {
   const config = getUserConfig(email); if (!config) throw new Error("User not found");
   const budget = config.budget || {}; const analytics = await getAnalyticsForUser(email);
-  const systemPrompt = `You are the Media Buyer Agent for "No-Human." You handle budgeting, bidding, and scaling.\nRules: Never exceed monthly cap. Scale winners 10% every 4 hours. Kill campaigns >30% over CPA target. Move budget from losers to winners.\nRespond with valid JSON (no markdown):\n{ "actions": [{ "type": "scale_budget|reduce_budget|pause_campaign|enable_campaign|adjust_bid|reallocate", "campaign": "name", "details": "what", "amount": "how much", "urgency": "immediate|scheduled|monitoring", "rationale": "why" }], "budget_summary": { "total_daily_recommended": 0, "monthly_projected": 0, "within_cap": true, "efficiency_score": 0 }, "strategy_note": "strategy" }`;
+  const systemPrompt = `You are the Media Buyer Agent for "ScaleBot." You handle budgeting, bidding, and scaling.\nRules: Never exceed monthly cap. Scale winners 10% every 4 hours. Kill campaigns >30% over CPA target. Move budget from losers to winners.\nRespond with valid JSON (no markdown):\n{ "actions": [{ "type": "scale_budget|reduce_budget|pause_campaign|enable_campaign|adjust_bid|reallocate", "campaign": "name", "details": "what", "amount": "how much", "urgency": "immediate|scheduled|monitoring", "rationale": "why" }], "budget_summary": { "total_daily_recommended": 0, "monthly_projected": 0, "within_cap": true, "efficiency_score": 0 }, "strategy_note": "strategy" }`;
   const userMessage = `Optimize budgets:\nSTRATEGY: ${budget.northStar || "growth"}, Daily=$${budget.dailyBudget || 0}, Monthly=$${budget.monthlyBudget || 0}, Target CPA=$${budget.targetCpa || 0}, Scaling=${budget.scalingLimit || 150}%\nWEBSITE: Sessions=${analytics.totals.sessions || 0}, Users=${analytics.totals.users || 0}, Conversions=${analytics.totals.conversions || 0}\nCHANNELS:\n${analytics.campaigns.map((c) => `- ${c.name} [${c.channelType}] Sessions=${c.sessions} Users=${c.users} Conversions=${c.conversions} BounceRate=${c.bounceRate}%`).join("\n")}\nDAYS LEFT: ${30 - new Date().getDate()}, REMAINING BUDGET: $${((budget.monthlyBudget || 0)).toFixed(2)}\n${analystTrigger ? `\nTRIGGER: ${analystTrigger}` : ""}`;
   const aiResponse = await callClaude(systemPrompt, userMessage);
   let parsed; try { parsed = JSON.parse(aiResponse); } catch { const m = aiResponse.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { actions: [], budget_summary: { total_daily_recommended: 0, monthly_projected: 0, within_cap: true, efficiency_score: 50 }, strategy_note: aiResponse.slice(0, 500) }; }
@@ -489,7 +463,7 @@ async function runAccountManagerAgent(email) {
   const recentLogs = getAgentLogs(email).slice(0, 50);
   const activity = { analyst: recentLogs.filter((l) => l.agent === "analyst").slice(0, 10), creative_director: recentLogs.filter((l) => l.agent === "creative_director").slice(0, 10), media_buyer: recentLogs.filter((l) => l.agent === "media_buyer").slice(0, 10) };
   const searchConsoleInfo = analytics.searchConsole ? `\nSEARCH CONSOLE: ${analytics.searchConsole.totals.clicks} clicks, ${analytics.searchConsole.totals.impressions} impressions, CTR ${(analytics.searchConsole.totals.ctr * 100).toFixed(2)}%, Avg Pos ${analytics.searchConsole.totals.avgPosition}` : "";
-  const systemPrompt = `You are the Account Manager Agent for "No-Human." You translate complex data into simple client updates.\nRespond with valid JSON (no markdown):\n{ "report": { "greeting": "Hi!", "executive_summary": "summary", "performance_highlights": [{ "metric": "name", "value": "val", "trend": "up|down|stable", "context": "why" }], "agent_actions_summary": "what agents did", "wins": [], "concerns": [], "next_steps": [], "closing": "bye" }, "delivery": { "channel": "email", "frequency": "daily", "urgency": "routine" }, "alerts": [{ "type": "info|warning|critical", "message": "msg" }], "video_brief_script": "60-second script" }`;
+  const systemPrompt = `You are the Account Manager Agent for "ScaleBot." You translate complex data into simple client updates.\nRespond with valid JSON (no markdown):\n{ "report": { "greeting": "Hi!", "executive_summary": "summary", "performance_highlights": [{ "metric": "name", "value": "val", "trend": "up|down|stable", "context": "why" }], "agent_actions_summary": "what agents did", "wins": [], "concerns": [], "next_steps": [], "closing": "bye" }, "delivery": { "channel": "email", "frequency": "daily", "urgency": "routine" }, "alerts": [{ "type": "info|warning|critical", "message": "msg" }], "video_brief_script": "60-second script" }`;
   const userMessage = `Generate report for:\nCLIENT: ${company.name || "Client"} (${company.industry || "?"})\nDATA SOURCE: MongoDB (Real Google Analytics + Search Console)\nDELIVERY: ${reporting.deliveryChannel || "email"} (${reporting.reportFrequency || "daily"})\nWEBSITE: Sessions=${analytics.totals.sessions || 0} (${analytics.changes.sessions > 0 ? "+" : ""}${analytics.changes.sessions || 0}%), Users=${analytics.totals.users || 0}, PageViews=${analytics.totals.pageViews || 0}, BounceRate=${analytics.totals.bounceRate || 0}%, Conversions=${analytics.totals.conversions || 0}\nBUDGET: $${budget.dailyBudget || 0}/day, $${budget.monthlyBudget || 0}/mo, Strategy=${budget.northStar || "growth"}\n${searchConsoleInfo}\nANALYST: ${activity.analyst.map((l) => l.message).join(" | ") || "None"}\nCREATIVE: ${activity.creative_director.map((l) => l.message).join(" | ") || "None"}\nMEDIA BUYER: ${activity.media_buyer.map((l) => l.message).join(" | ") || "None"}\nTOP CHANNELS: ${analytics.campaigns.slice(0, 5).map((c) => `${c.name}: ${c.sessions} sessions, ${c.users} users`).join("; ")}`;
   const aiResponse = await callClaude(systemPrompt, userMessage);
   let parsed; try { parsed = JSON.parse(aiResponse); } catch { const m = aiResponse.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { report: { greeting: "Hi!", executive_summary: aiResponse.slice(0, 500), performance_highlights: [], agent_actions_summary: "", wins: [], concerns: [], next_steps: [], closing: "Talk soon!" }, delivery: { channel: "email", frequency: "daily", urgency: "routine" }, alerts: [], video_brief_script: "" }; }
@@ -520,90 +494,16 @@ async function runFullAgentLoop(email) {
 app.get("/", (req, res) => res.json({ message: "Server running 🚀", mongodb: !!mongoClient, usageSummary: !!usageSummaryCollection }));
 app.post("/api/login", (req, res) => res.json({ message: "Login successful" }));
 
-// ─── Strategy & Content from MongoDB ───
-app.get("/api/strategy", async (req, res) => {
-  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
-  const docs = await fetchStrategyFromMongo();
-  res.json({ strategies: docs });
-});
+app.get("/api/strategy", async (req, res) => { if (!req.headers.authorization) return res.status(401).json({ error: "No auth" }); const docs = await fetchStrategyFromMongo(); res.json({ strategies: docs }); });
+app.get("/api/content", async (req, res) => { if (!req.headers.authorization) return res.status(401).json({ error: "No auth" }); const docs = await fetchContentFromMongo(); res.json({ contentResponses: docs }); });
+app.get("/api/company-reports", async (req, res) => { if (!req.headers.authorization) return res.status(401).json({ error: "No auth" }); const docs = await fetchCompanyReportsFromMongo(); res.json({ reports: docs }); });
+app.get("/api/competitor-response", async (req, res) => { if (!req.headers.authorization) return res.status(401).json({ error: "No auth" }); const docs = await fetchCompetitorResponseFromMongo(); res.json({ responses: docs }); });
+app.get("/api/kpi-projections", async (req, res) => { if (!req.headers.authorization) return res.status(401).json({ error: "No auth" }); try { const docs = await fetchKpiProjectionsFromMongo(); res.json({ projections: docs }); } catch (err) { res.status(500).json({ error: err.message }); } });
 
-app.get("/api/content", async (req, res) => {
-  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
-  const docs = await fetchContentFromMongo();
-  res.json({ contentResponses: docs });
-});
+app.get("/api/usage-summary/stats", async (req, res) => { if (!req.headers.authorization) return res.status(401).json({ error: "No auth" }); try { const stats = await fetchUsageSummaryStats(); if (!stats) return res.status(503).json({ error: "usage_summary collection not found" }); res.json(stats); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.get("/api/usage-summary/documents", async (req, res) => { if (!req.headers.authorization) return res.status(401).json({ error: "No auth" }); try { const limit = parseInt(req.query.limit) || 5; const skip = parseInt(req.query.skip) || 0; const result = await fetchUsageSummaryDocs(limit, skip); res.json(result); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.get("/api/usage-summary/debug", async (req, res) => { const info = { collectionFound: !!usageSummaryCollection, mongoConnected: !!mongoClient }; if (usageSummaryCollection) { try { const count = await usageSummaryCollection.countDocuments(); const sample = await usageSummaryCollection.findOne({}); info.documentCount = count; info.sampleDocument = sample ? serializeMongoDoc(sample) : null; info.sampleFields = sample ? Object.keys(sample) : []; } catch (err) { info.error = err.message; } } res.json(info); });
 
-// ─── Company Reports & Competitor Response from MongoDB ───
-app.get("/api/company-reports", async (req, res) => {
-  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
-  const docs = await fetchCompanyReportsFromMongo();
-  res.json({ reports: docs });
-});
-
-app.get("/api/competitor-response", async (req, res) => {
-  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
-  const docs = await fetchCompetitorResponseFromMongo();
-  res.json({ responses: docs });
-});
-
-// ─── KPI Projections from MongoDB ───
-app.get("/api/kpi-projections", async (req, res) => {
-  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
-  try {
-    const docs = await fetchKpiProjectionsFromMongo();
-    res.json({ projections: docs });
-  } catch (err) {
-    console.error("[KpiProjections] Error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ─── Usage Summary endpoints ───
-app.get("/api/usage-summary/stats", async (req, res) => {
-  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
-  try {
-    const stats = await fetchUsageSummaryStats();
-    if (!stats) return res.status(503).json({ error: "usage_summary collection not found in any database" });
-    res.json(stats);
-  } catch (err) {
-    console.error("[UsageSummary] Stats error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get("/api/usage-summary/documents", async (req, res) => {
-  if (!req.headers.authorization) return res.status(401).json({ error: "No auth" });
-  try {
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = parseInt(req.query.skip) || 0;
-    const result = await fetchUsageSummaryDocs(limit, skip);
-    res.json(result);
-  } catch (err) {
-    console.error("[UsageSummary] Documents error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get("/api/usage-summary/debug", async (req, res) => {
-  const info = {
-    collectionFound: !!usageSummaryCollection,
-    mongoConnected: !!mongoClient,
-  };
-  if (usageSummaryCollection) {
-    try {
-      const count = await usageSummaryCollection.countDocuments();
-      const sample = await usageSummaryCollection.findOne({});
-      info.documentCount = count;
-      info.sampleDocument = sample ? serializeMongoDoc(sample) : null;
-      info.sampleFields = sample ? Object.keys(sample) : [];
-    } catch (err) {
-      info.error = err.message;
-    }
-  }
-  res.json(info);
-});
-
-// ─── MongoDB read-only endpoints ───
 app.get("/api/mongo/databases", async (req, res) => { if (!mongoClient) return res.status(503).json({ error: "MongoDB not connected" }); try { const adminDb = mongoClient.db().admin(); const dbList = await adminDb.listDatabases(); res.json({ databases: dbList.databases }); } catch (err) { res.status(500).json({ error: err.message }); } });
 app.get("/api/mongo/:database/collections", async (req, res) => { if (!mongoClient) return res.status(503).json({ error: "MongoDB not connected" }); try { const db = mongoClient.db(req.params.database); const collections = await db.listCollections().toArray(); res.json({ collections: collections.map(c => c.name) }); } catch (err) { res.status(500).json({ error: err.message }); } });
 app.get("/api/mongo/:database/:collection", async (req, res) => { if (!mongoClient) return res.status(503).json({ error: "MongoDB not connected" }); try { const db = mongoClient.db(req.params.database); const collection = db.collection(req.params.collection); const count = await collection.countDocuments(); const docs = await collection.find({}).limit(100).toArray(); res.json({ collection: req.params.collection, count, documents: docs }); } catch (err) { res.status(500).json({ error: err.message }); } });

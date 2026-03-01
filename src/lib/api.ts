@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://hackathon-backend.evoxs.xyz";
 
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem("token");
@@ -205,6 +205,51 @@ export interface KpiProjection {
 }
 
 
+// ─── Usage Summary ───
+export interface UsageSummaryDoc {
+  _id: string;
+  session_id: string;
+  recorded_at: string;
+  cache_read: number;
+  cache_write: number;
+  cost_usd: number;
+  input_tokens: number;
+  output_tokens: number;
+  synced_at: string;
+  total_actions: number;
+  total_conv: number;
+}
+
+export interface UsageSummaryDailyPoint {
+  date: string;
+  cost: number;
+  sessions: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheRead: number;
+  cacheWrite: number;
+  actions: number;
+  conversations: number;
+}
+
+export interface UsageSummaryStats {
+  totalSessions: number;
+  totalCost: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCacheRead: number;
+  totalCacheWrite: number;
+  totalActions: number;
+  totalConversations: number;
+  daily: UsageSummaryDailyPoint[];
+}
+
+export interface UsageSummaryDocsResult {
+  documents: UsageSummaryDoc[];
+  count: number;
+}
+
+
 // ─── User Config ───
 export async function fetchUserConfig(): Promise<UserConfig | null> {
   const email = getEmail(); if (!email) return null;
@@ -278,49 +323,6 @@ export async function fetchKpiProjections(): Promise<KpiProjection[]> {
 
 
 // ─── Usage Summary ───
-export interface UsageSummaryDoc {
-  _id: string;
-  session_id: string;
-  recorded_at: string;
-  cache_read: number;
-  cache_write: number;
-  cost_usd: number;
-  input_tokens: number;
-  output_tokens: number;
-  synced_at: string;
-  total_actions: number;
-  total_conv: number;
-}
-
-export interface UsageSummaryDailyPoint {
-  date: string;
-  cost: number;
-  sessions: number;
-  inputTokens: number;
-  outputTokens: number;
-  cacheRead: number;
-  cacheWrite: number;
-  actions: number;
-  conversations: number;
-}
-
-export interface UsageSummaryStats {
-  totalSessions: number;
-  totalCost: number;
-  totalInputTokens: number;
-  totalOutputTokens: number;
-  totalCacheRead: number;
-  totalCacheWrite: number;
-  totalActions: number;
-  totalConversations: number;
-  daily: UsageSummaryDailyPoint[];
-}
-
-export interface UsageSummaryDocsResult {
-  documents: UsageSummaryDoc[];
-  count: number;
-}
-
 export async function fetchUsageSummaryStats(): Promise<UsageSummaryStats> {
   const res = await fetch(`${API_BASE}/api/usage-summary/stats`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error("Failed"); return res.json();

@@ -56,15 +56,15 @@ export default function LoginPage() {
       >
         <motion.div variants={item} className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-              <Zap className="h-7 w-7 text-primary" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+              <img src="/logo-good.png" alt="ScaleBot Logo" width={60} height={60} />
             </div>
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-            No-Human
+            ScaleBot
           </h1>
           <p className="text-sm text-muted-foreground">
-            Autonomous AI Marketing Platform
+            AI-Powered Growth Engine
           </p>
         </motion.div>
 
@@ -123,7 +123,7 @@ export default function LoginPage() {
               <button
                 className="text-primary hover:underline"
                 onClick={() => {
-                  toast.info("Contact sales@no-human.ai to get started.");
+                  toast.info("Contact sales@scalebot.ai to get started.");
                 }}
               >
                 Contact Sales

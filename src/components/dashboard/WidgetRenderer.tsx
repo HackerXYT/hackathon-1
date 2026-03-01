@@ -7,6 +7,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Line,
 } from "recharts";
+import { ChartTooltip } from "@/components/charts/ChartTooltip";
 import { mockAgentStatuses } from "@/lib/mock-data";
 import type { GoogleAdsAnalytics, UserConfig } from "@/lib/api";
 
@@ -16,23 +17,6 @@ interface WidgetProps {
   config: UserConfig | null | undefined;
   bounceChange: number;
 }
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload?.length) {
-    return (
-      <div className="glass-card p-3 text-xs">
-        <p className="font-medium text-foreground mb-1">{label}</p>
-        {payload.map((p: any, i: number) => (
-          <p key={i} style={{ color: p.color }} className="flex justify-between gap-4">
-            <span className="text-muted-foreground">{p.name}:</span>
-            <span className="font-medium">{p.value}</span>
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
 
 const goalLabels: Record<string, string> = {
   sales: "Sales", leads: "Leads", traffic: "Website Traffic",
@@ -139,9 +123,9 @@ export function WidgetRenderer({ widgetId, analytics, config, bounceChange }: Wi
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,25%,16%)" />
               <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(215,20%,55%)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "hsl(215,20%,55%)" }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="sessions" name="Sessions" stroke="hsl(187,96%,42%)" fill="url(#sg)" strokeWidth={2} />
-              <Area type="monotone" dataKey="users" name="Users" stroke="hsl(250,80%,62%)" fill="url(#ug)" strokeWidth={2} />
+              <Tooltip content={<ChartTooltip />} cursor={{ stroke: "hsl(215,20%,25%)", strokeWidth: 1 }} />
+              <Area type="monotone" dataKey="sessions" name="Sessions" stroke="hsl(187,96%,42%)" fill="url(#sg)" strokeWidth={2} activeDot={{ r: 4, strokeWidth: 0, fill: "hsl(187,96%,42%)" }} />
+              <Area type="monotone" dataKey="users" name="Users" stroke="hsl(250,80%,62%)" fill="url(#ug)" strokeWidth={2} activeDot={{ r: 4, strokeWidth: 0, fill: "hsl(250,80%,62%)" }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -160,9 +144,9 @@ export function WidgetRenderer({ widgetId, analytics, config, bounceChange }: Wi
               <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(215,20%,55%)" }} axisLine={false} tickLine={false} />
               <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "hsl(215,20%,55%)" }} axisLine={false} tickLine={false} />
               <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(215,20%,55%)" }} axisLine={false} tickLine={false} domain={[0, 100]} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area yAxisId="left" type="monotone" dataKey="pageViews" name="Page Views" stroke="hsl(152,69%,40%)" fill="url(#pvg)" strokeWidth={2} />
-              <Line yAxisId="right" type="monotone" dataKey="bounceRate" name="Bounce Rate (%)" stroke="hsl(0,72%,51%)" strokeWidth={2} dot={false} strokeDasharray="4 4" />
+              <Tooltip content={<ChartTooltip />} cursor={{ stroke: "hsl(215,20%,25%)", strokeWidth: 1 }} />
+              <Area yAxisId="left" type="monotone" dataKey="pageViews" name="Page Views" stroke="hsl(152,69%,40%)" fill="url(#pvg)" strokeWidth={2} activeDot={{ r: 4, strokeWidth: 0, fill: "hsl(152,69%,40%)" }} />
+              <Line yAxisId="right" type="monotone" dataKey="bounceRate" name="Bounce Rate (%)" stroke="hsl(0,72%,51%)" strokeWidth={2} dot={false} strokeDasharray="4 4" activeDot={{ r: 4, strokeWidth: 0, fill: "hsl(0,72%,51%)" }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -177,7 +161,7 @@ export function WidgetRenderer({ widgetId, analytics, config, bounceChange }: Wi
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,25%,16%)" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(215,20%,55%)" }} axisLine={false} tickLine={false} />
               <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: "hsl(215,20%,55%)" }} axisLine={false} tickLine={false} width={120} />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(222,25%,14%)" }} />
               <Bar dataKey="sessions" name="Sessions" fill="hsl(187,96%,42%)" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -257,7 +241,7 @@ export function WidgetRenderer({ widgetId, analytics, config, bounceChange }: Wi
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0"><agent.icon className="h-4 w-4 text-primary" /></div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-foreground truncate">{agent.title}</p>
-                    <div className="flex items-center gap-1 mt-0.5"><s.icon className={`h-3 w-3 ${s.color} ${status.status === "generating" ? "animate-spin" : ""}`} /><span className={`text-[10px] font-medium ${s.color}`}>{s.label}</span></div>
+                    <div className="flex items-center gap-1 mt-0.5"><s.icon className={`h-3 w-3 ${s.color} ${status.status === "active" ? "" : "animate-spin"}`} /><span className={`text-[10px] font-medium ${s.color}`}>{s.label}</span></div>
                   </div>
                 </div>
               );
